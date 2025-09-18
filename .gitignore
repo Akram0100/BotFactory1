@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.dist/
+build/
+dist/
+
+# Virtual env
+.venv/
+venv/
+ENV/
+
+# IDE/OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Flask/Instance
+instance/
+*.db
+*.sqlite
+*.sqlite3
+
+# Secrets / Env
+.env
+.env.*
+*.key
+*.pem
+.secrets/
+
+# Logs
+*.log
+logs/
+
+# Node (if any)
+node_modules/
+
+# Cache
+.cache/
+.pytest_cache/
+
+# Local tooling/state
+.local/
+
+# PWA/Service worker builds
+static/sw.js.map
