@@ -6,7 +6,7 @@ from typing import Dict, List, Optional, Any, Union, Tuple
 from datetime import datetime
 from flask import Blueprint, request, jsonify, url_for
 from app import db, app
-from models import User, Bot, ChatHistory
+from models import User, Bot, ChatHistory, BotCustomer
 from ai import get_ai_response, process_knowledge_base
 from audio_processor import download_and_process_audio
 
@@ -251,6 +251,38 @@ Yangi obunani BotFactory.uz saytidan sotib oling.
                         ]
                     )
                     return True
+                
+                # Track customer in BotCustomer for broadcasts
+                try:
+                    with app.app_context():
+                        customer = BotCustomer.query.filter_by(
+                            bot_id=self.bot_id,
+                            platform='whatsapp',
+                            platform_user_id=str(from_number)
+                        ).first()
+                        if not customer:
+                            customer = BotCustomer(
+                                bot_id=self.bot_id,
+                                platform='whatsapp',
+                                platform_user_id=str(from_number),
+                                first_name='',
+                                last_name='',
+                                username=f"wa_{from_number}",
+                                language='uz',
+                                is_active=True,
+                                message_count=1
+                            )
+                            db.session.add(customer)
+                        else:
+                            customer.last_interaction = datetime.utcnow()
+                            customer.is_active = True
+                            customer.message_count = (customer.message_count or 0) + 1
+                        db.session.commit()
+                except Exception as _:
+                    try:
+                        db.session.rollback()
+                    except:
+                        pass
                 
                 # AI javobini olish
                 knowledge_base = process_knowledge_base(self.bot_id)
@@ -543,6 +575,11 @@ def whatsapp_webhook(bot_id):
                                         if message_text:
                                             bot.handle_message(from_number, message_text)
                                     
+                                    # Media messages
+                                    elif message.get('type') == 'audio':
+                                        audio_data = message.get('audio', {})
+                                        bot.handle_audio_message(from_number, audio_data)
+                                    
                                     # Button interactions
                                     elif message.get('type') == 'interactive':
                                         interactive_data = message.get('interactive', {})
@@ -553,8 +590,38 @@ def whatsapp_webhook(bot_id):
                                             if button_id and button_title:
                                                 bot.handle_button_click(from_number, button_id, button_title)
                                     
-                                    # Mark message as read
-                                    _mark_message_as_read(bot, message_id)
+                                    # Track customer for ALL message types
+                                    try:
+                                        with app.app_context():
+                                            customer = BotCustomer.query.filter_by(
+                                                bot_id=bot_id,
+                                                platform='whatsapp',
+                                                platform_user_id=str(from_number)
+                                            ).first()
+                                            if not customer:
+                                                customer = BotCustomer(
+                                                    bot_id=bot_id,
+                                                    platform='whatsapp',
+                                                    platform_user_id=str(from_number),
+                                                    first_name='',
+                                                    last_name='',
+                                                    username=f"wa_{from_number}",
+                                                    language='uz',
+                                                    is_active=True,
+                                                    message_count=1
+                                                )
+                                                db.session.add(customer)
+                                            else:
+                                                customer.last_interaction = datetime.utcnow()
+                                                customer.is_active = True
+                                                customer.message_count = (customer.message_count or 0) + 1
+                                            db.session.commit()
+                                    except Exception as e:
+                                        logger.error(f"Customer tracking error: {str(e)}")
+                                        try:
+                                            db.session.rollback()
+                                        except:
+                                            pass
             
             return 'OK', 200
     

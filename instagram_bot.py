@@ -6,7 +6,7 @@ from typing import Dict, List, Optional, Any, Union
 from datetime import datetime
 from flask import Blueprint, request, jsonify, url_for
 from app import db, app
-from models import User, Bot, ChatHistory
+from models import User, Bot, ChatHistory, BotCustomer
 from ai import get_ai_response, process_knowledge_base
 from audio_processor import download_and_process_audio
 
@@ -183,6 +183,37 @@ class InstagramBot:
                     self.send_message(sender_id, welcome_message)
                     return True
                 
+                # Track customer in BotCustomer for broadcasts
+                try:
+                    customer = BotCustomer.query.filter_by(
+                        bot_id=self.bot_id,
+                        platform='instagram',
+                        platform_user_id=str(sender_id)
+                    ).first()
+                    if not customer:
+                        customer = BotCustomer(
+                            bot_id=self.bot_id,
+                            platform='instagram',
+                            platform_user_id=str(sender_id),
+                            first_name='',
+                            last_name='',
+                            username=f"ig_{sender_id}",
+                            language=user.language,
+                            is_active=True,
+                            message_count=1
+                        )
+                        db.session.add(customer)
+                    else:
+                        customer.last_interaction = datetime.utcnow()
+                        customer.is_active = True
+                        customer.message_count = (customer.message_count or 0) + 1
+                    db.session.commit()
+                except Exception as _:
+                    try:
+                        db.session.rollback()
+                    except:
+                        pass
+
                 # AI javobini olish
                 knowledge_base = process_knowledge_base(self.bot_id)
                 
