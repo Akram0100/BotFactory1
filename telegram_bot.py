@@ -1271,6 +1271,30 @@ def validate_telegram_token(token):
         logger.warning(f"Token validation error: {e}")
         return False
 
+
+def send_message_to_bot_customer(bot_id: int, platform: str, platform_user_id: str, message_text: str) -> bool:
+    """Send a broadcast message to a BotCustomer via the correct bot token.
+    Currently supports Telegram customers. Returns True if sent successfully.
+    """
+    try:
+        if platform.lower() != 'telegram':
+            return False  # Extend later for Instagram/WhatsApp
+
+        get_ai_response, process_knowledge_base, User, Bot, ChatHistory, db, app = get_dependencies()
+        with app.app_context():
+            bot = Bot.query.get(bot_id)
+            if not bot or not bot.telegram_token:
+                return False
+            http_bot = TelegramHTTPBot(bot.telegram_token)
+            resp = http_bot.send_message(platform_user_id, message_text)
+            return bool(resp and resp.get('ok'))
+    except Exception as e:
+        try:
+            logger.error(f"Error sending message to bot customer: {str(e)[:100]}")
+        except:
+            pass
+        return False
+
 def start_bot_automatically(bot_id, bot_token):
     """Botni avtomatik ishga tushirish"""
     try:

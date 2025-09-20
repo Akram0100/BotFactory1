@@ -569,30 +569,48 @@ def change_user_subscription():
 def send_broadcast_messages(broadcast_id, message_text, target_type):
     """Send broadcast message to users"""
     sent_count = 0
-    
+    sent_keys = set()  # avoid duplicate sends across sources
+
+    # 1) Platform Users (with telegram_id)
     if target_type == 'customers':
-        # Send to paying customers only
+        # paying customers only
         users = User.query.filter(User.subscription_type.in_(['starter', 'basic', 'premium'])).all()
     else:
-        # Send to all telegram users who have interacted with bots
         users = User.query.filter(User.telegram_id.isnot(None)).all()
-    
-    # Import telegram bot for sending messages
+
     try:
-        from telegram_bot import send_admin_message_to_user
-        
+        from telegram_bot import send_admin_message_to_user, send_message_to_bot_customer
+        # Send to platform users first
         for user in users:
-            if user.telegram_id:
-                try:
-                    success = send_admin_message_to_user(user.telegram_id, message_text)
-                    if success:
-                        sent_count += 1
-                except:
+            if not user.telegram_id:
+                continue
+            key = ('user', str(user.telegram_id))
+            if key in sent_keys:
+                continue
+            try:
+                if send_admin_message_to_user(user.telegram_id, message_text):
+                    sent_keys.add(key)
+                    sent_count += 1
+            except Exception:
+                continue
+
+        # 2) Bot end-users (BotCustomer) — telegram only for now
+        if target_type != 'customers':  # only include bot users for 'all'
+            customers = BotCustomer.query.filter_by(platform='telegram', is_active=True).all()
+            for c in customers:
+                key = ('bot', c.bot_id, c.platform, str(c.platform_user_id))
+                # Skip if this user already received via platform user telegram_id
+                if ('user', str(c.platform_user_id)) in sent_keys or key in sent_keys:
                     continue
-                        
-    except Exception as e:
+                try:
+                    if send_message_to_bot_customer(c.bot_id, c.platform, str(c.platform_user_id), f"📢 Admin xabari:\n\n{message_text}"):
+                        sent_keys.add(key)
+                        sent_count += 1
+                except Exception:
+                    continue
+    except Exception:
         pass
-    
+
     return sent_count
 
 @main_bp.route('/bot/create', methods=['GET', 'POST'])
