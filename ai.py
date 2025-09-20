@@ -1,6 +1,7 @@
 import os
 import logging
 from typing import Optional
+from flask import current_app
 
 try:
     import google.generativeai as genai
@@ -24,6 +25,21 @@ def get_ai_response(message: str, bot_name: str = "Chatbot Factory AI", user_lan
         }
         
         system_prompt = language_prompts.get(user_language, language_prompts['uz'])
+
+        # Inject platform contact info so bot can answer contact-related questions precisely
+        try:
+            support_phone = (current_app.config.get('SUPPORT_PHONE') or '').strip()
+            support_tg = (current_app.config.get('SUPPORT_TELEGRAM') or '').strip()
+            contact_block = []
+            if support_phone:
+                contact_block.append(f"Admin telefon raqami: {support_phone}")
+            if support_tg:
+                contact_block.append(f"Telegram aloqa: {support_tg}")
+            if contact_block:
+                system_prompt += "\n\nMuhim kontaktlar (ishga tushirilgan platforma sozlamalaridan):\n" + "\n".join(contact_block) + "\n" 
+                system_prompt += "\nAgar foydalanuvchi telefon yoki telegram haqida so'rasa, yuqoridagi kontaktlarni aniq ko'rsating."
+        except Exception:
+            pass
         
         # Add knowledge base context if available (optimized for speed)
         if knowledge_base:
