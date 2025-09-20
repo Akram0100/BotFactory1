@@ -1,0 +1,23 @@
+Savol: Platforma nima qiladi?
+Javob: BotFactory AI — Telegram/Instagram/WhatsApp uchun AI chatbotlar yaratish va boshqarish platformasi. O'zbek tiliga moslangan, bilimlar bazasi bilan ishlaydi.
+
+Savol: Admin bilan qanday bog'lanaman?
+Javob: Telefon: +998 99 644 84 44. Telegram: https://t.me/akramjon0011
+
+Savol: Ish vaqti?
+Javob: Dushanba–Juma, 09:00–18:00.
+
+Savol: Obuna narxlari?
+Javob: Starter — 165 000 so'm/oy. Basic — 290 000 so'm/oy. Premium — 590 000 so'm/oy.
+
+Savol: Qanday to'lov usullari bor?
+Javob: Payme, Click, Uzum.
+
+Savol: Botlarni qanday o'rgataman?
+Javob: Dashboard'da botingizni tanlang, "Bilimlar bazasi" bo'limida .txt/.docx/.csv fayllarni yuklang yoki Excel namuna faylini to'ldiring.
+
+Savol: Telegram botni ishga tushirish?
+Javob: BotFather'dan token oling, Dashboard → Bot yaratish → Platforma: Telegram → Token kiriting → Saqlang.
+
+Savol: Qo'llab-quvvatlash kanali?
+Javob: Telefon: +998 99 644 84 44. Telegram: https://t.me/akramjon0011
