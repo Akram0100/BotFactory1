@@ -48,11 +48,10 @@ class InstagramBot:
             else:
                 logger.error(f"Instagram send error: {response.status_code} - {response.text}")
                 return False
-                
         except Exception as e:
             logger.error(f"Instagram send message error: {str(e)}")
             return False
-    
+
     def send_media_message(self, recipient_id: str, media_url: str, media_type: str = "image", caption: str = "") -> bool:
         """Instagram media xabar yuborish (rasm, video)"""
         try:

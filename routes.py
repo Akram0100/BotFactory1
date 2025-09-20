@@ -622,9 +622,9 @@ def send_broadcast_messages(broadcast_id, message_text, target_type, segment: st
             except Exception:
                 continue
 
-        # 2) Bot end-users (BotCustomer) — telegram only for now
+        # 2) Bot end-users (BotCustomer) — telegram/instagram/whatsapp
         if target_type != 'customers':  # only include bot users for 'all'
-            cust_q = BotCustomer.query.filter_by(platform='telegram', is_active=True)
+            cust_q = BotCustomer.query.filter(BotCustomer.is_active.is_(True))
             if segment == 'active_30d':
                 cust_q = cust_q.filter(BotCustomer.last_interaction >= now - timedelta(days=30))
             customers = cust_q.all()
@@ -634,7 +634,16 @@ def send_broadcast_messages(broadcast_id, message_text, target_type, segment: st
                 if ('user', str(c.platform_user_id)) in sent_keys or key in sent_keys:
                     continue
                 try:
-                    if send_message_to_bot_customer(c.bot_id, c.platform, str(c.platform_user_id), f"📢 Admin xabari:\n\n{message_text}"):
+                    ok = False
+                    if c.platform == 'telegram':
+                        ok = send_message_to_bot_customer(c.bot_id, c.platform, str(c.platform_user_id), f"📢 Admin xabari:\n\n{message_text}")
+                    elif c.platform == 'instagram':
+                        from instagram_bot import send_message_to_instagram_customer
+                        ok = send_message_to_instagram_customer(c.bot_id, str(c.platform_user_id), f"📢 Admin xabari:\n\n{message_text}")
+                    elif c.platform == 'whatsapp':
+                        from whatsapp_bot import send_message_to_whatsapp_customer
+                        ok = send_message_to_whatsapp_customer(c.bot_id, str(c.platform_user_id), f"📢 Admin xabari:\n\n{message_text}")
+                    if ok:
                         sent_keys.add(key)
                         sent_count += 1
                 except Exception:

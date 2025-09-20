@@ -51,10 +51,11 @@ class WhatsAppBot:
             else:
                 logger.error(f"WhatsApp send error: {response.status_code} - {response.text}")
                 return False
-                
         except Exception as e:
             logger.error(f"WhatsApp send message error: {str(e)}")
             return False
+
+ 
     
     def send_template_message(self, to_number: str, template_name: str, language_code: str = "uz") -> bool:
         """Template xabar yuborish"""
