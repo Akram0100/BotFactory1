@@ -490,6 +490,16 @@
                                 </select>
                             </div>
                             <div class="mb-3">
+                                <label for="segment" class="form-label">Segment (ixtiyoriy)</label>
+                                <select class="form-select" id="segment" name="segment">
+                                    <option value="">— Segment tanlanmagan —</option>
+                                    <option value="trial_14">Faqat 14 kunlik sinovdagilar</option>
+                                    <option value="active_30d">So'nggi 30 kunda aktiv bo'lganlar</option>
+                                    <option value="paid">Pullik obunachilar</option>
+                                    <option value="unpaid">Pullik emaslar (free)</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
                                 <label for="message_text" class="form-label">Xabar matni</label>
                                 <textarea class="form-control" id="message_text" name="message_text" rows="6" 
                                           placeholder="Bu yerga xabar matnini kiriting..." required></textarea>

@@ -476,6 +476,7 @@ def send_broadcast():
     
     message_text = request.form.get('message_text')
     target_type = request.form.get('target_type', 'all')
+    segment = request.form.get('segment', '').strip()
     
     if not message_text:
         flash('Xabar matni kiritilishi shart!', 'error')
@@ -494,7 +495,7 @@ def send_broadcast():
     
     # Send messages
     try:
-        sent_count = send_broadcast_messages(broadcast.id, message_text, target_type)
+        sent_count = send_broadcast_messages(broadcast.id, message_text, target_type, segment)
         
         # Update broadcast record
         broadcast.sent_count = sent_count
@@ -566,7 +567,7 @@ def change_user_subscription():
     
     return redirect(url_for('main.admin'))
 
-def send_broadcast_messages(broadcast_id, message_text, target_type):
+def send_broadcast_messages(broadcast_id, message_text, target_type, segment: str = ""):
     """Send broadcast message to users"""
     sent_count = 0
     sent_keys = set()  # avoid duplicate sends across sources
@@ -574,9 +575,36 @@ def send_broadcast_messages(broadcast_id, message_text, target_type):
     # 1) Platform Users (with telegram_id)
     if target_type == 'customers':
         # paying customers only
-        users = User.query.filter(User.subscription_type.in_(['starter', 'basic', 'premium'])).all()
+        base_q = User.query.filter(User.subscription_type.in_(['starter', 'basic', 'premium']))
     else:
-        users = User.query.filter(User.telegram_id.isnot(None)).all()
+        base_q = User.query
+
+    # Apply segment filters to platform users
+    now = datetime.utcnow()
+    if segment == 'trial_14':
+        # Free users within first 14-15 days
+        users = base_q.filter(
+            User.subscription_type == 'free',
+            (
+                # If end_date exists, use it
+                (User.subscription_end_date != None) & (User.subscription_end_date > now) & (User.subscription_end_date <= now + timedelta(days=1))
+            ) | (
+                # Legacy: compute approx from start/created_at
+                (User.subscription_end_date == None)
+            )
+        ).all()
+    elif segment == 'active_30d':
+        # Users who interacted in last 30 days (have ChatHistory)
+        from models import ChatHistory
+        cutoff = now - timedelta(days=30)
+        subq = db.session.query(ChatHistory.user_telegram_id).filter(ChatHistory.created_at >= cutoff).subquery()
+        users = base_q.filter(User.telegram_id.isnot(None), User.telegram_id.in_(subq)).all()
+    elif segment == 'paid':
+        users = base_q.filter(User.subscription_type.in_(['starter', 'basic', 'premium'])).all()
+    elif segment == 'unpaid':
+        users = base_q.filter(User.subscription_type == 'free').all()
+    else:
+        users = base_q.filter(User.telegram_id.isnot(None)).all()
 
     try:
         from telegram_bot import send_admin_message_to_user, send_message_to_bot_customer
@@ -596,7 +624,10 @@ def send_broadcast_messages(broadcast_id, message_text, target_type):
 
         # 2) Bot end-users (BotCustomer) — telegram only for now
         if target_type != 'customers':  # only include bot users for 'all'
-            customers = BotCustomer.query.filter_by(platform='telegram', is_active=True).all()
+            cust_q = BotCustomer.query.filter_by(platform='telegram', is_active=True)
+            if segment == 'active_30d':
+                cust_q = cust_q.filter(BotCustomer.last_interaction >= now - timedelta(days=30))
+            customers = cust_q.all()
             for c in customers:
                 key = ('bot', c.bot_id, c.platform, str(c.platform_user_id))
                 # Skip if this user already received via platform user telegram_id
