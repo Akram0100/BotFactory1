@@ -823,8 +823,8 @@ footer {
 /* Speed Dial */
 .chat-speed-dial {
     position: fixed !important;
-    right: 24px !important;
-    bottom: 24px !important;
+    right: calc(env(safe-area-inset-right) + 24px) !important;
+    bottom: calc(env(safe-area-inset-bottom) + 90px) !important; /* clearly above FAB */
     display: grid;
     gap: 12px;
     z-index: 1075; /* below widget, above content */
@@ -855,7 +855,8 @@ footer {
 .chat-speed-dial.open .speed-btn { transform: scale(1); opacity: 1; }
 
 /* keep dial stacked above FAB */
-.chat-speed-dial { padding-bottom: 56px; }
+/* No extra padding needed since we positioned it above the FAB */
+
 
 .chat-widget {
     position: fixed !important;
@@ -938,7 +939,7 @@ footer {
         max-height: 70vh; 
     }
     .chat-fab { right: 12px !important; bottom: 12px !important; }
-    .chat-speed-dial { right: 12px !important; bottom: 12px !important; }
+    .chat-speed-dial { right: 12px !important; bottom: 84px !important; }
 }
 
 /* Force high contrast for form elements */
