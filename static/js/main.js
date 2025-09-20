@@ -7,6 +7,8 @@ function initializeChatWidget() {
   const input = document.getElementById('chat-text');
   const openBtn = document.getElementById('open-chatbot');
   const messages = document.getElementById('chat-messages');
+  const actions = document.getElementById('chat-actions');
+  const actionOpenChat = document.getElementById('action-open-chat');
 
   if (!widget || !messages) return;
 
@@ -14,15 +16,33 @@ function initializeChatWidget() {
     widget.classList.remove('d-none');
     widget.classList.add('show');
     input && input.focus();
+    // Hide actions panel when opening widget
+    actions && actions.classList.add('d-none');
   };
   const closeWidget = () => {
     widget.classList.remove('show');
     widget.classList.add('d-none');
   };
 
-  fab && fab.addEventListener('click', openWidget);
+  // FAB toggles actions panel
+  fab && fab.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!actions) return;
+    actions.classList.toggle('d-none');
+  });
   openBtn && openBtn.addEventListener('click', openWidget);
   closeBtn && closeBtn.addEventListener('click', closeWidget);
+  // Quick action: open chatbot
+  actionOpenChat && actionOpenChat.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openWidget();
+  });
+  // Close actions when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!actions || actions.classList.contains('d-none')) return;
+    const isClickInside = actions.contains(e.target) || (fab && fab.contains(e.target));
+    if (!isClickInside) actions.classList.add('d-none');
+  });
 
   form && form.addEventListener('submit', async (e) => {
     e.preventDefault();

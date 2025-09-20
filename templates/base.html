@@ -225,6 +225,18 @@
   <button id="chat-fab" class="chat-fab" aria-label="Chatbot bilan suhbat">
     <i class="fas fa-comments"></i>
   </button>
+  <!-- Chat Quick Actions -->
+  <div id="chat-actions" class="chat-actions d-none" aria-label="Chat harakatlari">
+    <button id="action-open-chat" class="btn btn-primary btn-sm w-100 mb-2">
+      <i class="fas fa-comments me-2"></i>Chatbotga yozish
+    </button>
+    <a href="{{ config['SUPPORT_TELEGRAM'] }}" target="_blank" rel="noopener" class="btn btn-outline-info btn-sm w-100 mb-2">
+      <i class="fab fa-telegram me-2"></i>Telegramga yozish
+    </a>
+    <a href="tel:{{ config['SUPPORT_PHONE'] }}" class="btn btn-outline-success btn-sm w-100">
+      <i class="fas fa-phone me-2"></i>Qo'ng'iroq qilish
+    </a>
+  </div>
 
   <!-- Chat Widget -->
   <div id="chat-widget" class="chat-widget d-none" aria-live="polite">
@@ -273,8 +285,10 @@
         function showInstallButton() {
             // Show custom install button if needed
             const installBtn = document.createElement('button');
+            installBtn.id = 'pwa-install-btn';
             installBtn.className = 'btn btn-primary btn-sm position-fixed';
-            installBtn.style.cssText = 'bottom: 20px; right: 20px; z-index: 1000;';
+            // Shift the install button left to avoid overlap with chat FAB
+            installBtn.style.cssText = 'bottom: 24px; right: 96px; z-index: 1000;';
             installBtn.innerHTML = '<i class="fas fa-download me-1"></i>Ilovani o\'rnatish';
             installBtn.onclick = installApp;
             document.body.appendChild(installBtn);
@@ -289,8 +303,8 @@
                     }
                     deferredPrompt = null;
                     // Remove install button
-                    const installBtn = document.querySelector('button[onclick="installApp()"]');
-                    if (installBtn) installBtn.remove();
+                    const installBtnEl = document.getElementById('pwa-install-btn');
+                    if (installBtnEl) installBtnEl.remove();
                 });
             }
         }

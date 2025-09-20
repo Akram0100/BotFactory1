@@ -819,6 +819,25 @@ footer {
 
 .chat-fab:hover { filter: brightness(0.95); transform: translateY(-2px); }
 
+/* Chat Quick Actions panel */
+.chat-actions {
+    position: fixed !important;
+    right: 24px !important;
+    bottom: 90px !important; /* above FAB */
+    width: 240px;
+    background: #ffffff;
+    border: 1px solid rgba(0,0,0,.08);
+    border-radius: 12px;
+    box-shadow: 0 12px 28px rgba(0,0,0,.2);
+    padding: 12px;
+    z-index: 1070; /* below widget, above content */
+}
+
+[data-bs-theme="dark"] .chat-actions {
+    background: #2d2d2d;
+    border-color: #505050;
+}
+
 .chat-widget {
     position: fixed !important;
     right: 24px !important;
@@ -900,6 +919,7 @@ footer {
         max-height: 70vh; 
     }
     .chat-fab { right: 12px !important; bottom: 12px !important; }
+    .chat-actions { right: 12px !important; bottom: 84px !important; width: calc(100vw - 24px); }
 }
 
 /* Force high contrast for form elements */
