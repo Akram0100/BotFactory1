@@ -18,11 +18,15 @@ def login():
         password = request.form.get('password')
         
         if not username or not password:
-            flash('Foydalanuvchi nomi va parol kiritilishi shart!', 'error')
+            flash('Foydalanuvchi nomi/email va parol kiritilishi shart!', 'error')
             return render_template('login.html')
         
         try:
+            # Avval username bo'yicha qidiramiz
             user = User.query.filter_by(username=username).first()
+            # Agar topilmasa, email bo'yicha ham urinib ko'ramiz
+            if not user:
+                user = User.query.filter_by(email=username).first()
         except Exception as db_error:
             logging.error(f"Database connection error during login: {str(db_error)}")
             flash('Ma\'lumotlar bazasi bilan bog\'lanishda muammo. Iltimos keyinroq urinib ko\'ring.', 'error')
@@ -37,7 +41,7 @@ def login():
             else:
                 flash('Sizning hisobingiz bloklangan!', 'error')
         else:
-            flash('Noto\'g\'ri foydalanuvchi nomi yoki parol!', 'error')
+            flash('Noto\'g\'ri foydalanuvchi nomi/email yoki parol!', 'error')
     
     return render_template('login.html')
 
