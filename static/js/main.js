@@ -7,8 +7,8 @@ function initializeChatWidget() {
   const input = document.getElementById('chat-text');
   const openBtn = document.getElementById('open-chatbot');
   const messages = document.getElementById('chat-messages');
-  const actions = document.getElementById('chat-actions');
-  const actionOpenChat = document.getElementById('action-open-chat');
+  const speedDial = document.getElementById('chat-speed-dial');
+  const speedChatBtn = document.getElementById('speed-chat');
 
   if (!widget || !messages) return;
 
@@ -16,32 +16,32 @@ function initializeChatWidget() {
     widget.classList.remove('d-none');
     widget.classList.add('show');
     input && input.focus();
-    // Hide actions panel when opening widget
-    actions && actions.classList.add('d-none');
+    // Hide speed dial when opening widget
+    speedDial && speedDial.classList.remove('open');
   };
   const closeWidget = () => {
     widget.classList.remove('show');
     widget.classList.add('d-none');
   };
 
-  // FAB toggles actions panel
+  // FAB toggles speed-dial
   fab && fab.addEventListener('click', (e) => {
     e.stopPropagation();
-    if (!actions) return;
-    actions.classList.toggle('d-none');
+    if (!speedDial) return;
+    speedDial.classList.toggle('open');
   });
   openBtn && openBtn.addEventListener('click', openWidget);
   closeBtn && closeBtn.addEventListener('click', closeWidget);
   // Quick action: open chatbot
-  actionOpenChat && actionOpenChat.addEventListener('click', (e) => {
+  speedChatBtn && speedChatBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     openWidget();
   });
   // Close actions when clicking outside
   document.addEventListener('click', (e) => {
-    if (!actions || actions.classList.contains('d-none')) return;
-    const isClickInside = actions.contains(e.target) || (fab && fab.contains(e.target));
-    if (!isClickInside) actions.classList.add('d-none');
+    if (!speedDial || !speedDial.classList.contains('open')) return;
+    const isClickInside = speedDial.contains(e.target) || (fab && fab.contains(e.target));
+    if (!isClickInside) speedDial.classList.remove('open');
   });
 
   form && form.addEventListener('submit', async (e) => {

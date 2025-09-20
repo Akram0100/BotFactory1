@@ -820,23 +820,42 @@ footer {
 .chat-fab:hover { filter: brightness(0.95); transform: translateY(-2px); }
 
 /* Chat Quick Actions panel */
-.chat-actions {
+/* Speed Dial */
+.chat-speed-dial {
     position: fixed !important;
     right: 24px !important;
-    bottom: 90px !important; /* above FAB */
-    width: 240px;
-    background: #ffffff;
-    border: 1px solid rgba(0,0,0,.08);
-    border-radius: 12px;
-    box-shadow: 0 12px 28px rgba(0,0,0,.2);
-    padding: 12px;
-    z-index: 1070; /* below widget, above content */
+    bottom: 24px !important;
+    display: grid;
+    gap: 12px;
+    z-index: 1075; /* below widget, above content */
+    pointer-events: none; /* default: do not intercept */
 }
 
-[data-bs-theme="dark"] .chat-actions {
-    background: #2d2d2d;
-    border-color: #505050;
+.chat-speed-dial .speed-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    box-shadow: 0 8px 18px rgba(0,0,0,.25);
+    transform: scale(0);
+    opacity: 0;
+    transition: transform .18s ease, opacity .18s ease; 
+    pointer-events: auto; /* clickable */
 }
+
+.chat-speed-dial .speed-chat { background: var(--primary-color); }
+.chat-speed-dial .speed-telegram { background: #24A1DE; }
+.chat-speed-dial .speed-call { background: #28a745; }
+
+/* Layout: actions appear above FAB when open */
+.chat-speed-dial.open .speed-btn { transform: scale(1); opacity: 1; }
+
+/* keep dial stacked above FAB */
+.chat-speed-dial { padding-bottom: 56px; }
 
 .chat-widget {
     position: fixed !important;
@@ -919,7 +938,7 @@ footer {
         max-height: 70vh; 
     }
     .chat-fab { right: 12px !important; bottom: 12px !important; }
-    .chat-actions { right: 12px !important; bottom: 84px !important; width: calc(100vw - 24px); }
+    .chat-speed-dial { right: 12px !important; bottom: 12px !important; }
 }
 
 /* Force high contrast for form elements */

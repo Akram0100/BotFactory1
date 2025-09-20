@@ -225,16 +225,16 @@
   <button id="chat-fab" class="chat-fab" aria-label="Chatbot bilan suhbat">
     <i class="fas fa-comments"></i>
   </button>
-  <!-- Chat Quick Actions -->
-  <div id="chat-actions" class="chat-actions d-none" aria-label="Chat harakatlari">
-    <button id="action-open-chat" class="btn btn-primary btn-sm w-100 mb-2">
-      <i class="fas fa-comments me-2"></i>Chatbotga yozish
+  <!-- Chat Speed Dial (3 actions) -->
+  <div id="chat-speed-dial" class="chat-speed-dial" aria-label="Chat harakatlari">
+    <button id="speed-chat" class="speed-btn speed-chat" title="Chatbotga yozish" aria-label="Chatbotga yozish">
+      <i class="fas fa-comments"></i>
     </button>
-    <a href="{{ config['SUPPORT_TELEGRAM'] }}" target="_blank" rel="noopener" class="btn btn-outline-info btn-sm w-100 mb-2">
-      <i class="fab fa-telegram me-2"></i>Telegramga yozish
+    <a id="speed-telegram" class="speed-btn speed-telegram" title="Telegramga yozish" aria-label="Telegramga yozish" href="{{ config['SUPPORT_TELEGRAM'] }}" target="_blank" rel="noopener">
+      <i class="fab fa-telegram"></i>
     </a>
-    <a href="tel:{{ config['SUPPORT_PHONE'] }}" class="btn btn-outline-success btn-sm w-100">
-      <i class="fas fa-phone me-2"></i>Qo'ng'iroq qilish
+    <a id="speed-call" class="speed-btn speed-call" title="Qo'ng'iroq qilish" aria-label="Qo'ng'iroq qilish" href="tel:{{ config['SUPPORT_PHONE'] }}">
+      <i class="fas fa-phone"></i>
     </a>
   </div>
 
