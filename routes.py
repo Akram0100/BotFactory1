@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, send_file
 from flask_login import login_required, current_user
-from app import db
+from app import db, csrf
 from models import User, Bot, KnowledgeBase, Payment, ChatHistory, BroadcastMessage, BotCustomer, BotMessage
 from werkzeug.utils import secure_filename
 import os
@@ -19,6 +19,7 @@ def index():
     return render_template('index.html')
 
 @main_bp.route('/api/webchat', methods=['POST'])
+@csrf.exempt
 def api_webchat():
     """Frontend web chat endpoint. Returns AI reply as JSON."""
     try:

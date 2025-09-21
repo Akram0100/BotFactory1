@@ -5,7 +5,7 @@ import requests
 from typing import Dict, List, Optional, Any, Union
 from datetime import datetime
 from flask import Blueprint, request, jsonify, url_for
-from app import db, app
+from app import db, app, csrf
 from models import User, Bot, ChatHistory, BotCustomer
 from ai import get_ai_response, process_knowledge_base
 from audio_processor import download_and_process_audio
@@ -423,6 +423,7 @@ instagram_manager = InstagramBotManager()
 
 # Flask routes
 @instagram_bp.route('/webhook/<int:bot_id>', methods=['GET', 'POST'])
+@csrf.exempt
 def instagram_webhook(bot_id):
     """Instagram webhook endpoint"""
     try:
@@ -467,6 +468,7 @@ def instagram_webhook(bot_id):
         return 'Internal Server Error', 500
 
 @instagram_bp.route('/start/<int:bot_id>', methods=['POST'])
+@csrf.exempt
 def start_instagram_bot(bot_id):
     """Instagram botni ishga tushirish"""
     try:
@@ -490,6 +492,7 @@ def start_instagram_bot(bot_id):
         return jsonify({'success': False, 'error': str(e)})
 
 @instagram_bp.route('/stop/<int:bot_id>', methods=['POST'])
+@csrf.exempt
 def stop_instagram_bot(bot_id):
     """Instagram botni to'xtatish"""
     try:
