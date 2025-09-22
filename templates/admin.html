@@ -226,6 +226,12 @@
                                                 data-current-subscription="{{ user.subscription_type }}">
                                             <i class="fas fa-crown"></i>
                                         </button>
+                                        <form method="POST" action="{{ url_for('main.admin_delete_user', user_id=user.id) }}" style="display:inline;" onsubmit="return confirm('Ushbu foydalanuvchini va uning barcha botlarini o\'chirishni tasdiqlaysizmi?');">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="btn btn-outline-danger" title="Foydalanuvchini o'chirish">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
                                         {% endif %}
                                         <button class="btn btn-outline-secondary" title="Tahrirlash">
                                             <i class="fas fa-edit"></i>
@@ -394,6 +400,12 @@
                                         <button class="btn btn-outline-warning" title="Boshqarish">
                                             <i class="fas fa-cog"></i>
                                         </button>
+                                        <form method="POST" action="{{ url_for('main.admin_delete_bot', bot_id=bot.id) }}" style="display:inline;" onsubmit="return confirm('Ushbu bot va uning barcha yozuvlarini o\'chirishni tasdiqlaysizmi?');">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="btn btn-outline-danger" title="Botni o'chirish">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
                                     </div>
                                 </td>
                             </tr>

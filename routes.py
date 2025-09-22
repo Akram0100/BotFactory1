@@ -95,6 +95,121 @@ def admin():
     if not current_user.is_admin:
         flash('Sizda admin huquqi yo\'q!', 'error')
         return redirect(url_for('main.dashboard'))
+
+# ===================== Admin: Delete Bot / User =====================
+@main_bp.route('/admin/delete-bot/<int:bot_id>', methods=['POST'])
+@login_required
+def admin_delete_bot(bot_id):
+    """Admin uchun: botni to'xtatib, barcha bog'liq ma'lumotlari bilan o'chirish
+    Xavfsizlik: faqat admin. Foydalanuvchi o'z botini o'chirmaydi (admin paneldan).
+    """
+    if not current_user.is_admin:
+        flash('Ruxsat yo\'q', 'error')
+        return redirect(url_for('main.dashboard'))
+
+    try:
+        bot = Bot.query.get_or_404(bot_id)
+
+        # Stop platform runner safely
+        platform = (bot.platform or '').lower()
+        try:
+            if platform == 'telegram':
+                bot_manager.stop_bot_polling(bot.id, 'telegram')
+            elif platform == 'instagram':
+                from instagram_bot import instagram_manager
+                instagram_manager.stop_bot(bot.id)
+            elif platform == 'whatsapp':
+                from whatsapp_bot import whatsapp_manager
+                whatsapp_manager.stop_bot(bot.id)
+        except Exception as e:
+            logging.warning(f"Bot stop during delete warning: {e}")
+
+        # Delete related records
+        try:
+            ChatHistory.query.filter_by(bot_id=bot.id).delete(synchronize_session=False)
+        except Exception:
+            pass
+        try:
+            BotCustomer.query.filter_by(bot_id=bot.id).delete(synchronize_session=False)
+        except Exception:
+            pass
+        try:
+            BotMessage.query.filter_by(bot_id=bot.id).delete(synchronize_session=False)
+        except Exception:
+            pass
+        try:
+            BroadcastMessage.query.filter_by(bot_id=bot.id).delete(synchronize_session=False)
+        except Exception:
+            pass
+
+        # Finally delete bot
+        db.session.delete(bot)
+        db.session.commit()
+        flash('Bot va bog\'liq ma\'lumotlar o\'chirildi', 'success')
+    except Exception as e:
+        logging.error(f"Admin delete bot error: {e}")
+        db.session.rollback()
+        flash('O\'chirishda xatolik', 'error')
+
+    return redirect(url_for('main.dashboard'))
+
+@main_bp.route('/admin/delete-user/<int:user_id>', methods=['POST'])
+@login_required
+def admin_delete_user(user_id):
+    """Admin uchun: foydalanuvchini va uning botlarini o'chirish.
+    Admin rolli foydalanuvchilarni saqlab qolamiz.
+    """
+    if not current_user.is_admin:
+        flash('Ruxsat yo\'q', 'error')
+        return redirect(url_for('main.dashboard'))
+
+    user = User.query.get_or_404(user_id)
+    if getattr(user, 'is_admin', False):
+        flash('Admin foydalanuvchini o\'chirib bo\'lmaydi', 'warning')
+        return redirect(url_for('main.dashboard'))
+
+    try:
+        # Delete user's bots via admin_delete_bot logic (stop + cascade)
+        bots = Bot.query.filter_by(user_id=user.id).all()
+        for b in bots:
+            try:
+                # Reuse deletion steps inline to keep single transaction
+                platform = (b.platform or '').lower()
+                try:
+                    if platform == 'telegram':
+                        bot_manager.stop_bot_polling(b.id, 'telegram')
+                    elif platform == 'instagram':
+                        from instagram_bot import instagram_manager
+                        instagram_manager.stop_bot(b.id)
+                    elif platform == 'whatsapp':
+                        from whatsapp_bot import whatsapp_manager
+                        whatsapp_manager.stop_bot(b.id)
+                except Exception:
+                    pass
+                ChatHistory.query.filter_by(bot_id=b.id).delete(synchronize_session=False)
+                BotCustomer.query.filter_by(bot_id=b.id).delete(synchronize_session=False)
+                try:
+                    BotMessage.query.filter_by(bot_id=b.id).delete(synchronize_session=False)
+                except Exception:
+                    pass
+                try:
+                    BroadcastMessage.query.filter_by(bot_id=b.id).delete(synchronize_session=False)
+                except Exception:
+                    pass
+                db.session.delete(b)
+            except Exception as inner_e:
+                logging.error(f"Delete user bot error: {inner_e}")
+
+        # Finally delete user
+        db.session.delete(user)
+        db.session.commit()
+        flash('Foydalanuvchi va uning botlari o\'chirildi', 'success')
+    except Exception as e:
+        logging.error(f"Admin delete user error: {e}")
+        db.session.rollback()
+        flash('O\'chirishda xatolik', 'error')
+
+    return redirect(url_for('main.dashboard'))
     
     users = User.query.all()
     payments = Payment.query.order_by(Payment.created_at.desc()).limit(50).all()
