@@ -1671,11 +1671,32 @@ def send_bot_message(bot_id):
         success_count = 0
         for customer in target_customers:
             try:
-                if customer.platform == 'telegram' and bot.telegram_token:
-                    result = send_telegram_message_sync(bot.telegram_token, customer.platform_user_id, message_text)
+                platform = (customer.platform or '').lower()
+                target_id = str(customer.platform_user_id or '').strip()
+                if not target_id:
+                    continue
+                if platform == 'telegram' and bot.telegram_token:
+                    result = send_telegram_message_sync(bot.telegram_token, target_id, message_text)
                     if result:
                         success_count += 1
-                # Boshqa platformalar uchun qo'shimcha kod
+                elif platform == 'whatsapp' and bot.whatsapp_token and bot.whatsapp_phone_id:
+                    try:
+                        from whatsapp_bot import WhatsAppBot
+                        wa = WhatsAppBot(bot.whatsapp_token, bot.whatsapp_phone_id, bot.id)
+                        if wa.send_message(target_id, message_text):
+                            success_count += 1
+                    except Exception as e:
+                        logging.error(f"WhatsApp send error for customer {customer.id}: {e}")
+                elif platform == 'instagram' and bot.instagram_token:
+                    try:
+                        from instagram_bot import InstagramBot
+                        ig = InstagramBot(bot.instagram_token, bot.id)
+                        if ig.send_message(target_id, message_text):
+                            success_count += 1
+                    except Exception as e:
+                        logging.error(f"Instagram send error for customer {customer.id}: {e}")
+                else:
+                    logging.warning(f"Unsupported or misconfigured platform for customer {customer.id}: {platform}")
             except Exception as e:
                 logging.error(f"Error sending message to customer {customer.id}: {str(e)}")
         
