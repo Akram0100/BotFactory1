@@ -120,6 +120,40 @@ def admin():
     
     return render_template('admin.html', users=users, payments=payments, 
                          bots=bots, stats=stats, broadcasts=broadcasts, chat_history=chat_history)
+# ================= SEO: sitemap.xml and robots.txt =================
+@main_bp.route('/sitemap.xml')
+def sitemap_xml():
+    """Generate a simple sitemap for key pages"""
+    from flask import Response
+    base = request.url_root.rstrip('/')
+    urls = [
+        f"{base}/",
+        f"{base}/dashboard",
+        f"{base}/admin",
+        f"{base}/login",
+        f"{base}/register",
+    ]
+    xml = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+    ]
+    for u in urls:
+        xml.append('<url>')
+        xml.append(f'<loc>{u}</loc>')
+        xml.append('</url>')
+    xml.append('</urlset>')
+    return Response("\n".join(xml), mimetype='application/xml')
+
+@main_bp.route('/robots.txt')
+def robots_txt():
+    """Basic robots.txt allowing all and pointing to sitemap"""
+    from flask import Response
+    base = request.url_root.rstrip('/')
+    content = f"""User-agent: *
+Allow: /
+Sitemap: {base}/sitemap.xml
+"""
+    return Response(content, mimetype='text/plain')
 # ===================== Admin: Delete Bot / User =====================
 @main_bp.route('/admin/delete-bot/<int:bot_id>', methods=['POST'])
 @login_required
