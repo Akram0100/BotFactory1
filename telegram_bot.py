@@ -317,6 +317,13 @@ class TelegramApplication:
                 updates = self.bot.get_updates(offset)
                 if updates.get('ok') and updates.get('result'):
                     for update in updates['result']:
+                        # Deduplicate by update_id across the process to avoid double replies
+                        try:
+                            uid = update.get('update_id')
+                        except Exception:
+                            uid = None
+                        if uid is not None and not _mark_processed(uid):
+                            continue
                         asyncio.run(self.bot.process_update(update))
                         offset = update['update_id'] + 1
                         
@@ -385,6 +392,28 @@ def get_dependencies():
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Global deduplication for processed Telegram update IDs to avoid double handling
+# even if multiple polling loops accidentally run in parallel. Keep it bounded.
+PROCESSED_UPDATE_IDS = set()
+from collections import deque
+_processed_queue = deque(maxlen=500)
+
+def _mark_processed(update_id):
+    if update_id in PROCESSED_UPDATE_IDS:
+        return False
+    PROCESSED_UPDATE_IDS.add(update_id)
+    _processed_queue.append(update_id)
+    # When queue drops old IDs, also remove from the set
+    if len(_processed_queue) == _processed_queue.maxlen:
+        # Clean up extras beyond deque window
+        while len(PROCESSED_UPDATE_IDS) > _processed_queue.maxlen:
+            # This is a safety; usually set and deque stay in sync by size
+            try:
+                PROCESSED_UPDATE_IDS.pop()
+            except KeyError:
+                break
+    return True
 
 class TelegramBot:
     def __init__(self, bot_token, bot_id):
