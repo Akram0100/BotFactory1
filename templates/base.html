@@ -30,21 +30,24 @@
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
     
     <!-- Canonical URL for SEO -->
-    <link rel="canonical" href="{{ request.url if request else '' }}">
+    <link rel="canonical" href="{{ request.base_url if request else '' }}">
+    <link rel="alternate" type="application/rss+xml" title="BotFactory AI Blog RSS" href="/blog/rss.xml">
+    <meta name="robots" content="index,follow">
     
     <!-- Open Graph (OG) tags for rich previews -->
     <meta property="og:type" content="website">
     <meta property="og:title" content="{% block og_title %}BotFactory AI — O'zbekcha AI Chatbot Platforma{% endblock %}">
     <meta property="og:description" content="{% block og_description %}Telegram/Instagram/WhatsApp uchun AI chatbotlar: tezkor start, admin panel, ko'p til va bilim baza.{% endblock %}">
-    <meta property="og:url" content="{{ request.url if request else '' }}">
-    <meta property="og:image" content="{{ url_for('static', filename='images/og-cover.png', _external=True) }}">
+    <meta property="og:url" content="{{ request.base_url if request else '' }}">
+    <meta property="og:image" content="{{ url_for('static', filename='images/favicon.png', _external=True) }}">
     <meta property="og:site_name" content="BotFactory AI">
+    <meta property="og:locale" content="uz_UZ">
     
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{% block twitter_title %}BotFactory AI — O'zbekcha AI Chatbot Platforma{% endblock %}">
     <meta name="twitter:description" content="{% block twitter_description %}Telegram/Instagram/WhatsApp uchun AI chatbotlar: tezkor start, admin panel, ko'p til.{% endblock %}">
-    <meta name="twitter:image" content="{{ url_for('static', filename='images/og-cover.png', _external=True) }}">
+    <meta name="twitter:image" content="{{ url_for('static', filename='images/favicon.png', _external=True) }}">
     
     <!-- Set initial theme before CSS loads to prevent flash -->
     <script>
@@ -143,10 +146,32 @@
       "operatingSystem": "Web",
       "description": "AI chatbot yaratish va boshqarish platformasi (Telegram, Instagram, WhatsApp)",
       "url": "{{ request.url_root if request else '' }}",
-      "image": "{{ url_for('static', filename='images/og-cover.png', _external=True) }}",
+      "image": "{{ url_for('static', filename='images/favicon.png', _external=True) }}",
       "publisher": {
         "@type": "Organization",
         "name": "BotFactory AI"
+      }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "BotFactory AI",
+      "url": "{{ request.url_root if request else '' }}",
+      "logo": "{{ url_for('static', filename='images/favicon.png', _external=True) }}"
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "BotFactory AI",
+      "url": "{{ request.url_root if request else '' }}",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "{{ request.url_root if request else '' }}search?q={query}",
+        "query-input": "required name=query"
       }
     }
     </script>
