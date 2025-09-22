@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675">
+  <rect width="1200" height="675" fill="#198754"/>
+  <rect x="24" y="24" width="1152" height="627" fill="#ffffff" rx="12"/>
+  <text x="50%" y="20%" text-anchor="middle" fill="#198754" font-size="36" font-family="Arial, Helvetica, sans-serif" font-weight="bold">Kirish sahifasi (namuna)</text>
+  <rect x="120" y="220" width="960" height="64" fill="#e9ecef" rx="8"/>
+  <text x="140" y="262" fill="#6c757d" font-size="20">Username yoki Email</text>
+  <rect x="120" y="310" width="960" height="64" fill="#e9ecef" rx="8"/>
+  <text x="140" y="352" fill="#6c757d" font-size="20">Parol</text>
+  <rect x="120" y="410" width="200" height="56" fill="#198754" rx="8"/>
+  <text x="220" y="447" text-anchor="middle" fill="#fff" font-size="20">Kirish</text>
+</svg>

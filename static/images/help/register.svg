@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675">
+  <rect width="1200" height="675" fill="#0d6efd"/>
+  <rect x="24" y="24" width="1152" height="627" fill="#ffffff" rx="12"/>
+  <text x="50%" y="20%" text-anchor="middle" fill="#0d6efd" font-size="36" font-family="Arial, Helvetica, sans-serif" font-weight="bold">Ro'yxatdan o'tish sahifasi (namuna)</text>
+  <rect x="120" y="180" width="960" height="64" fill="#e9ecef" rx="8"/>
+  <text x="140" y="222" fill="#6c757d" font-size="20">Username</text>
+  <rect x="120" y="270" width="960" height="64" fill="#e9ecef" rx="8"/>
+  <text x="140" y="312" fill="#6c757d" font-size="20">Email</text>
+  <rect x="120" y="360" width="960" height="64" fill="#e9ecef" rx="8"/>
+  <text x="140" y="402" fill="#6c757d" font-size="20">Parol</text>
+  <rect x="120" y="460" width="220" height="56" fill="#0d6efd" rx="8"/>
+  <text x="230" y="497" text-anchor="middle" fill="#fff" font-size="20">Ro'yxatdan o'tish</text>
+</svg>

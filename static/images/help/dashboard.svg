@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675">
+  <rect width="1200" height="675" fill="#6f42c1"/>
+  <rect x="24" y="24" width="1152" height="627" fill="#ffffff" rx="12"/>
+  <text x="50%" y="14%" text-anchor="middle" fill="#6f42c1" font-size="36" font-family="Arial, Helvetica, sans-serif" font-weight="bold">Boshqaruv paneli (namuna)</text>
+  <rect x="60" y="120" width="320" height="200" fill="#f8f9fa" stroke="#dee2e6" rx="8"/>
+  <rect x="420" y="120" width="320" height="200" fill="#f8f9fa" stroke="#dee2e6" rx="8"/>
+  <rect x="780" y="120" width="320" height="200" fill="#f8f9fa" stroke="#dee2e6" rx="8"/>
+  <rect x="60" y="360" width="1040" height="240" fill="#f8f9fa" stroke="#dee2e6" rx="8"/>
+  <text x="80" y="160" fill="#6c757d" font-size="20">Botlar ro'yxati</text>
+  <text x="80" y="400" fill="#6c757d" font-size="20">So'nggi xabarlar / loglar</text>
+</svg>
