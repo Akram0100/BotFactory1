@@ -357,6 +357,18 @@
                                            class="btn btn-outline-primary" title="Tahrirlash">
                                             <i class="fas fa-edit"></i>
                                         </a>
+                                        {% if bot.platform == 'Instagram' %}
+                                        <button class="btn btn-outline-success js-start-instagram" 
+                                                title="Instagram botni ishga tushirish"
+                                                data-bot-id="{{ bot.id }}">
+                                            <i class="fas fa-play"></i>
+                                        </button>
+                                        <button class="btn btn-outline-danger js-stop-instagram" 
+                                                title="Instagram botni to'xtatish"
+                                                data-bot-id="{{ bot.id }}">
+                                            <i class="fas fa-stop"></i>
+                                        </button>
+                                        {% endif %}
                                         <button class="btn btn-outline-warning" title="Boshqarish">
                                             <i class="fas fa-cog"></i>
                                         </button>
@@ -670,7 +682,7 @@
 </div>
 
 <script>
-// Modal oynani to'ldirish
+// Modal oynani to'ldirish va Instagram boshqaruv tugmalari
 document.addEventListener('DOMContentLoaded', function() {
     const changeSubscriptionModal = document.getElementById('changeSubscriptionModal');
     
@@ -703,6 +715,51 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         select.value = picked;
     });
+
+    // Instagram: start / stop tugmalari
+    function bindInstagramControls() {
+        document.querySelectorAll('.js-start-instagram').forEach(btn => {
+            btn.addEventListener('click', async function() {
+                const botId = this.getAttribute('data-bot-id');
+                this.disabled = true;
+                try {
+                    const res = await fetch(`/instagram/start/${botId}`, { method: 'POST' });
+                    const data = await res.json().catch(() => ({}));
+                    if (res.ok && data.success) {
+                        alert(`✅ Instagram bot #${botId} ishga tushdi`);
+                    } else {
+                        alert(`❌ Ishga tushirishda xatolik: ${data.error || res.status}`);
+                    }
+                } catch (e) {
+                    alert('❌ Tarmoq xatoligi yoki server javob bermadi');
+                } finally {
+                    this.disabled = false;
+                }
+            });
+        });
+
+        document.querySelectorAll('.js-stop-instagram').forEach(btn => {
+            btn.addEventListener('click', async function() {
+                const botId = this.getAttribute('data-bot-id');
+                this.disabled = true;
+                try {
+                    const res = await fetch(`/instagram/stop/${botId}`, { method: 'POST' });
+                    const data = await res.json().catch(() => ({}));
+                    if (res.ok && data.success) {
+                        alert(`🛑 Instagram bot #${botId} to'xtatildi`);
+                    } else {
+                        alert(`❌ To'xtatishda xatolik: ${data.error || res.status}`);
+                    }
+                } catch (e) {
+                    alert('❌ Tarmoq xatoligi yoki server javob bermadi');
+                } finally {
+                    this.disabled = false;
+                }
+            });
+        });
+    }
+
+    bindInstagramControls();
 });
 </script>
 
