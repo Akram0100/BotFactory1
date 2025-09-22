@@ -95,7 +95,31 @@ def admin():
     if not current_user.is_admin:
         flash('Sizda admin huquqi yo\'q!', 'error')
         return redirect(url_for('main.dashboard'))
-
+    # Build admin dashboard context
+    users = User.query.all()
+    payments = Payment.query.order_by(Payment.created_at.desc()).limit(50).all()
+    bots = Bot.query.all()
+    
+    # Statistics
+    stats = {
+        'total_users': User.query.count(),
+        'active_subscriptions': User.query.filter(User.subscription_type.in_(['starter', 'basic', 'premium'])).count(),
+        'total_bots': Bot.query.count(),
+        'total_payments': Payment.query.filter_by(status='completed').count(),
+        'monthly_revenue': Payment.query.filter(
+            Payment.status == 'completed',
+            Payment.created_at >= datetime.utcnow() - timedelta(days=30)
+        ).count()
+    }
+    
+    # Get broadcast messages
+    broadcasts = BroadcastMessage.query.order_by(BroadcastMessage.created_at.desc()).limit(10).all()
+    
+    # Get recent chat history
+    chat_history = ChatHistory.query.order_by(ChatHistory.created_at.desc()).limit(50).all()
+    
+    return render_template('admin.html', users=users, payments=payments, 
+                         bots=bots, stats=stats, broadcasts=broadcasts, chat_history=chat_history)
 # ===================== Admin: Delete Bot / User =====================
 @main_bp.route('/admin/delete-bot/<int:bot_id>', methods=['POST'])
 @login_required
@@ -210,31 +234,6 @@ def admin_delete_user(user_id):
         flash('O\'chirishda xatolik', 'error')
 
     return redirect(url_for('main.dashboard'))
-    
-    users = User.query.all()
-    payments = Payment.query.order_by(Payment.created_at.desc()).limit(50).all()
-    bots = Bot.query.all()
-    
-    # Statistics
-    stats = {
-        'total_users': User.query.count(),
-        'active_subscriptions': User.query.filter(User.subscription_type.in_(['starter', 'basic', 'premium'])).count(),
-        'total_bots': Bot.query.count(),
-        'total_payments': Payment.query.filter_by(status='completed').count(),
-        'monthly_revenue': Payment.query.filter(
-            Payment.status == 'completed',
-            Payment.created_at >= datetime.utcnow() - timedelta(days=30)
-        ).count()
-    }
-    
-    # Get broadcast messages
-    broadcasts = BroadcastMessage.query.order_by(BroadcastMessage.created_at.desc()).limit(10).all()
-    
-    # Get recent chat history
-    chat_history = ChatHistory.query.order_by(ChatHistory.created_at.desc()).limit(50).all()
-    
-    return render_template('admin.html', users=users, payments=payments, 
-                         bots=bots, stats=stats, broadcasts=broadcasts, chat_history=chat_history)
 
 @main_bp.route('/admin/test_message', methods=['POST'])
 @login_required
