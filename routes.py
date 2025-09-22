@@ -262,6 +262,46 @@ def test_message():
         
     return redirect(url_for('main.admin'))
 
+# =============== Instagram Diagnostics ===============
+@main_bp.route('/admin/api/instagram/diagnostics/<int:bot_id>')
+@login_required
+def instagram_diagnostics(bot_id):
+    """Simple diagnostics to verify Instagram token and show webhook URL.
+    Returns JSON with checks: token_present, token_valid (via /me), webhook_url.
+    """
+    if not current_user.is_admin:
+        return jsonify({'error': 'Access denied'}), 403
+    try:
+        bot = Bot.query.get_or_404(bot_id)
+        if (bot.platform or '').lower() != 'instagram':
+            return jsonify({'error': 'Not an Instagram bot'}), 400
+        info = {
+            'bot_id': bot_id,
+            'platform': 'instagram',
+            'token_present': bool(bot.instagram_token),
+            'token_valid': False,
+            'webhook_url': url_for('instagram.instagram_webhook', bot_id=bot_id, _external=True),
+            'webhook_verify_param_example': '?hub.verify_token=YOUR_VERIFY_TOKEN&hub.challenge=123',
+        }
+        # Minimal token validation: call Graph /me
+        if bot.instagram_token:
+            try:
+                resp = requests.get('https://graph.facebook.com/v18.0/me', params={'access_token': bot.instagram_token}, timeout=15)
+                j = {}
+                try:
+                    j = resp.json()
+                except Exception:
+                    j = {'raw': resp.text}
+                info['graph_status_code'] = resp.status_code
+                info['graph_response'] = j
+                if resp.status_code == 200 and j.get('id'):
+                    info['token_valid'] = True
+            except Exception as e:
+                info['graph_error'] = str(e)
+        return jsonify(info)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @main_bp.route('/admin/set_telegram_id', methods=['POST'])
 @login_required
 def set_telegram_id():
