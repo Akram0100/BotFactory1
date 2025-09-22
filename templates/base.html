@@ -32,7 +32,8 @@
     <script>
         (function() {
             try {
-                const saved = localStorage.getItem('theme') || 'auto';
+                // Default to dark for first-time visitors; allow toggle later
+                const saved = localStorage.getItem('theme') || 'dark';
                 let theme = saved;
                 if (saved === 'auto') {
                     const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
