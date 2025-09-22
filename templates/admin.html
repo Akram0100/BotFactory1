@@ -345,9 +345,9 @@
                                 </td>
                                 <td>
                                     {% if bot.is_active %}
-                                    <span class="badge bg-success">Faol</span>
+                                    <span class="badge bg-success status-badge" id="status-{{ bot.platform|lower }}-{{ bot.id }}">Faol</span>
                                     {% else %}
-                                    <span class="badge bg-secondary">To'xtatilgan</span>
+                                    <span class="badge bg-secondary status-badge" id="status-{{ bot.platform|lower }}-{{ bot.id }}">To'xtatilgan</span>
                                     {% endif %}
                                 </td>
                                 <td>{{ bot.created_at.strftime('%d.%m.%Y') }}</td>
@@ -365,6 +365,28 @@
                                         </button>
                                         <button class="btn btn-outline-danger js-stop-instagram" 
                                                 title="Instagram botni to'xtatish"
+                                                data-bot-id="{{ bot.id }}">
+                                            <i class="fas fa-stop"></i>
+                                        </button>
+                                        {% elif bot.platform == 'Telegram' %}
+                                        <button class="btn btn-outline-success js-start-telegram" 
+                                                title="Telegram botni ishga tushirish"
+                                                data-bot-id="{{ bot.id }}">
+                                            <i class="fas fa-play"></i>
+                                        </button>
+                                        <button class="btn btn-outline-danger js-stop-telegram" 
+                                                title="Telegram botni to'xtatish"
+                                                data-bot-id="{{ bot.id }}">
+                                            <i class="fas fa-stop"></i>
+                                        </button>
+                                        {% elif bot.platform == 'WhatsApp' %}
+                                        <button class="btn btn-outline-success js-start-whatsapp" 
+                                                title="WhatsApp botni ishga tushirish"
+                                                data-bot-id="{{ bot.id }}">
+                                            <i class="fas fa-play"></i>
+                                        </button>
+                                        <button class="btn btn-outline-danger js-stop-whatsapp" 
+                                                title="WhatsApp botni to'xtatish"
                                                 data-bot-id="{{ bot.id }}">
                                             <i class="fas fa-stop"></i>
                                         </button>
@@ -716,6 +738,29 @@ document.addEventListener('DOMContentLoaded', function() {
         select.value = picked;
     });
 
+    function getCsrfToken() {
+        const m = document.cookie.match(/(?:^|; )csrf_token=([^;]+)/);
+        return m ? decodeURIComponent(m[1]) : '';
+    }
+
+    function setStatusBadge(platform, botId, isRunning) {
+        const el = document.getElementById(`status-${platform}-${botId}`);
+        if (!el) return;
+        el.textContent = isRunning ? 'Faol' : "To'xtatilgan";
+        el.classList.remove('bg-success','bg-secondary');
+        el.classList.add(isRunning ? 'bg-success' : 'bg-secondary');
+    }
+
+    async function refreshStatus(platform, botId) {
+        try {
+            const res = await fetch(`/admin/api/is-running/${botId}?platform=${platform}`);
+            const data = await res.json();
+            if (res.ok && typeof data.is_running !== 'undefined') {
+                setStatusBadge(platform, botId, data.is_running);
+            }
+        } catch (e) {}
+    }
+
     // Instagram: start / stop tugmalari
     function bindInstagramControls() {
         document.querySelectorAll('.js-start-instagram').forEach(btn => {
@@ -723,10 +768,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 const botId = this.getAttribute('data-bot-id');
                 this.disabled = true;
                 try {
-                    const res = await fetch(`/instagram/start/${botId}`, { method: 'POST' });
+                    const res = await fetch(`/instagram/start/${botId}`, { method: 'POST', headers: { 'X-CSRFToken': getCsrfToken() } });
                     const data = await res.json().catch(() => ({}));
                     if (res.ok && data.success) {
                         alert(`✅ Instagram bot #${botId} ishga tushdi`);
+                        await refreshStatus('instagram', botId);
                     } else {
                         alert(`❌ Ishga tushirishda xatolik: ${data.error || res.status}`);
                     }
@@ -743,10 +789,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 const botId = this.getAttribute('data-bot-id');
                 this.disabled = true;
                 try {
-                    const res = await fetch(`/instagram/stop/${botId}`, { method: 'POST' });
+                    const res = await fetch(`/instagram/stop/${botId}`, { method: 'POST', headers: { 'X-CSRFToken': getCsrfToken() } });
                     const data = await res.json().catch(() => ({}));
                     if (res.ok && data.success) {
                         alert(`🛑 Instagram bot #${botId} to'xtatildi`);
+                        await refreshStatus('instagram', botId);
                     } else {
                         alert(`❌ To'xtatishda xatolik: ${data.error || res.status}`);
                     }
@@ -759,7 +806,115 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Telegram: start/stop
+    function bindTelegramControls() {
+        document.querySelectorAll('.js-start-telegram').forEach(btn => {
+            btn.addEventListener('click', async function() {
+                const botId = this.getAttribute('data-bot-id');
+                this.disabled = true;
+                try {
+                    const res = await fetch(`/bot/${botId}/start`, { method: 'POST', headers: { 'X-CSRFToken': getCsrfToken() } });
+                    if (res.redirected) {
+                        // Flash route redirects; still refresh status
+                        await refreshStatus('telegram', botId);
+                        alert('✅ Telegram bot ishga tushirish so\'rovi yuborildi');
+                    } else {
+                        await refreshStatus('telegram', botId);
+                        alert('✅ Telegram bot ishga tushirish bajarildi');
+                    }
+                } catch (e) {
+                    alert('❌ Tarmoq xatoligi yoki server javob bermadi');
+                } finally {
+                    this.disabled = false;
+                }
+            });
+        });
+
+        document.querySelectorAll('.js-stop-telegram').forEach(btn => {
+            btn.addEventListener('click', async function() {
+                const botId = this.getAttribute('data-bot-id');
+                this.disabled = true;
+                try {
+                    const res = await fetch(`/admin/api/stop-bot/${botId}?platform=telegram`, { method: 'POST', headers: { 'X-CSRFToken': getCsrfToken() } });
+                    const data = await res.json().catch(() => ({}));
+                    if (res.ok && data.success) {
+                        alert(`🛑 Telegram bot #${botId} to'xtatildi`);
+                    } else {
+                        alert(`❌ To'xtatishda xatolik: ${data.error || res.status}`);
+                    }
+                    await refreshStatus('telegram', botId);
+                } catch (e) {
+                    alert('❌ Tarmoq xatoligi yoki server javob bermadi');
+                } finally {
+                    this.disabled = false;
+                }
+            });
+        });
+    }
+
+    // WhatsApp: start/stop
+    function bindWhatsAppControls() {
+        document.querySelectorAll('.js-start-whatsapp').forEach(btn => {
+            btn.addEventListener('click', async function() {
+                const botId = this.getAttribute('data-bot-id');
+                this.disabled = true;
+                try {
+                    const res = await fetch(`/whatsapp/start/${botId}`, { method: 'POST', headers: { 'X-CSRFToken': getCsrfToken() } });
+                    const data = await res.json().catch(() => ({}));
+                    if (res.ok && data.success) {
+                        alert(`✅ WhatsApp bot #${botId} ishga tushdi`);
+                    } else {
+                        alert(`❌ Ishga tushirishda xatolik: ${data.error || res.status}`);
+                    }
+                    await refreshStatus('whatsapp', botId);
+                } catch (e) {
+                    alert('❌ Tarmoq xatoligi yoki server javob bermadi');
+                } finally {
+                    this.disabled = false;
+                }
+            });
+        });
+
+        document.querySelectorAll('.js-stop-whatsapp').forEach(btn => {
+            btn.addEventListener('click', async function() {
+                const botId = this.getAttribute('data-bot-id');
+                this.disabled = true;
+                try {
+                    const res = await fetch(`/admin/api/stop-bot/${botId}?platform=whatsapp`, { method: 'POST', headers: { 'X-CSRFToken': getCsrfToken() } });
+                    const data = await res.json().catch(() => ({}));
+                    if (res.ok && data.success) {
+                        alert(`🛑 WhatsApp bot #${botId} to'xtatildi`);
+                    } else {
+                        alert(`❌ To'xtatishda xatolik: ${data.error || res.status}`);
+                    }
+                    await refreshStatus('whatsapp', botId);
+                } catch (e) {
+                    alert('❌ Tarmoq xatoligi yoki server javob bermadi');
+                } finally {
+                    this.disabled = false;
+                }
+            });
+        });
+    }
+
+    // Periodic polling to keep status badges fresh
+    function startPollingStatuses() {
+        async function tick() {
+            const badges = document.querySelectorAll('.status-badge');
+            for (const b of badges) {
+                const id = b.id; // status-<platform>-<id>
+                const m = id.match(/^status-(telegram|instagram|whatsapp)-(\d+)$/);
+                if (!m) continue;
+                await refreshStatus(m[1], m[2]);
+            }
+        }
+        tick();
+        setInterval(tick, 5000);
+    }
     bindInstagramControls();
+    bindTelegramControls();
+    bindWhatsAppControls();
+    startPollingStatuses();
 });
 </script>
 

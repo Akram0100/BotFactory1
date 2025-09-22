@@ -296,3 +296,92 @@ def restart_bot_api(bot_id):
             "error": str(e),
             "bot_id": bot_id
         }), 500
+
+@bot_status_bp.route('/api/is-running/<int:bot_id>')
+@login_required
+def is_running_api(bot_id):
+    """Unified is_running check for a given bot across platforms.
+    Query param 'platform' is required: telegram|instagram|whatsapp
+    """
+    if not current_user.is_admin:
+        return jsonify({"error": "Access denied"}), 403
+    try:
+        from flask import request
+        platform = (request.args.get('platform') or '').lower()
+        if platform not in ['telegram', 'instagram', 'whatsapp']:
+            return jsonify({"error": "platform required: telegram|instagram|whatsapp"}), 400
+
+        running = False
+        if platform == 'telegram':
+            running = f'telegram_{bot_id}' in bot_manager.active_bots
+        elif platform == 'instagram':
+            try:
+                from instagram_bot import instagram_manager
+                running = bot_id in getattr(instagram_manager, 'running_bots', {})
+            except Exception:
+                running = False
+        elif platform == 'whatsapp':
+            try:
+                from whatsapp_bot import whatsapp_manager
+                running = bot_id in getattr(whatsapp_manager, 'running_bots', {})
+            except Exception:
+                running = False
+
+        return jsonify({
+            'bot_id': bot_id,
+            'platform': platform,
+            'is_running': bool(running)
+        })
+    except Exception as e:
+        logger.error(f"Error checking is_running: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@bot_status_bp.route('/api/stop-bot/<int:bot_id>', methods=['POST'])
+@login_required
+def stop_bot_api(bot_id):
+    """Stop a bot by platform. Query param platform is required.
+    telegram -> use bot_manager.stop_bot_polling
+    instagram/whatsapp -> call their managers directly
+    """
+    if not current_user.is_admin:
+        return jsonify({"error": "Access denied"}), 403
+    try:
+        from flask import request
+        from models import Bot
+        from app import app, db
+        platform = (request.args.get('platform') or '').lower()
+        if platform not in ['telegram', 'instagram', 'whatsapp']:
+            return jsonify({"error": "platform required: telegram|instagram|whatsapp"}), 400
+
+        with app.app_context():
+            bot = Bot.query.get(bot_id)
+            if not bot:
+                return jsonify({"error": "Bot not found"}), 404
+
+            if platform == 'telegram':
+                bot_manager.stop_bot_polling(bot_id, 'telegram')
+                # is_active flag reflect admin intent
+                bot.is_active = False
+                db.session.commit()
+                return jsonify({"success": True, "message": "Telegram bot stopped"})
+            elif platform == 'instagram':
+                try:
+                    from instagram_bot import instagram_manager
+                    instagram_manager.stop_bot(bot_id)
+                    bot.is_active = False
+                    db.session.commit()
+                    return jsonify({"success": True, "message": "Instagram bot stopped"})
+                except Exception as e:
+                    return jsonify({"success": False, "error": str(e)}), 500
+            elif platform == 'whatsapp':
+                try:
+                    from whatsapp_bot import whatsapp_manager
+                    whatsapp_manager.stop_bot(bot_id)
+                    bot.is_active = False
+                    db.session.commit()
+                    return jsonify({"success": True, "message": "WhatsApp bot stopped"})
+                except Exception as e:
+                    return jsonify({"success": False, "error": str(e)}), 500
+    except Exception as e:
+        logger.error(f"Error stopping bot {bot_id}: {e}")
+        return jsonify({"error": str(e)}), 500
