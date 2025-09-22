@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, send_file
 from flask_login import login_required, current_user
 from app import db, csrf
+from bot_manager import bot_manager
 from models import User, Bot, KnowledgeBase, Payment, ChatHistory, BroadcastMessage, BotCustomer, BotMessage
 from werkzeug.utils import secure_filename
 import os
@@ -696,19 +697,16 @@ def create_bot():
         db.session.add(bot)
         db.session.commit()
         
-        # Platform uchun avtomatik ishga tushirish
+        # Platform uchun avtomatik ishga tushirish (central manager)
         if platform == 'Telegram' and telegram_token:
             try:
-                from telegram_bot import start_bot_automatically
-                success = start_bot_automatically(bot.id, telegram_token)
-                if success:
-                    bot.is_active = True
-                    db.session.commit()
-                    flash('Telegram bot muvaffaqiyatli yaratildi va ishga tushirildi!', 'success')
-                else:
-                    flash('Bot yaratildi, lekin token noto\'g\'ri yoki ishga tushirishda muammo!', 'warning')
+                bot_manager.start_bot_polling(bot)
+                bot.is_active = True
+                db.session.commit()
+                flash('Telegram bot muvaffaqiyatli yaratildi va ishga tushirildi!', 'success')
             except Exception as e:
-                flash(f'Bot yaratildi, lekin aktivlashtirish xatoligi: {str(e)}', 'warning')
+                logging.error(f"Telegram botni ishga tushirishda xato: {e}")
+                flash('Bot yaratildi, lekin token noto\'g\'ri yoki ishga tushirishda muammo!', 'warning')
         elif platform == 'Instagram' and instagram_token:
             try:
                 from instagram_bot import start_instagram_bot_automatically
@@ -765,18 +763,14 @@ def edit_bot(bot_id):
             current_user.notification_channel = notification_channel.strip() if notification_channel.strip() else None
         current_user.notifications_enabled = notifications_enabled
         
-        # Agar Telegram bot token o'zgargan bo'lsa, qayta ishga tushirish
+        # Agar Telegram bot token o'zgargan bo'lsa, qayta ishga tushirish (central manager)
         if bot.platform == 'Telegram' and bot.telegram_token:
             try:
-                from telegram_bot import start_bot_automatically
-                success = start_bot_automatically(bot.id, bot.telegram_token)
-                if success:
-                    bot.is_active = True
-                else:
-                    bot.is_active = False
-                    flash('Bot ma\'lumotlari yangilandi, lekin token noto\'g\'ri!', 'warning')
+                bot_manager.start_bot_polling(bot)
+                bot.is_active = True
             except Exception as e:
-                flash(f'Bot yangilandi, lekin qayta ishga tushirishda xatolik: {str(e)}', 'warning')
+                logging.error(f"Telegram botni ishga tushirishda xato: {e}")
+                flash('Bot ma\'lumotlari yangilandi, lekin token noto\'g\'ri!', 'warning')
         
         db.session.commit()
         flash('Bot ma\'lumotlari yangilandi!', 'success')
@@ -796,14 +790,10 @@ def start_bot(bot_id):
     
     if bot.platform == 'Telegram' and bot.telegram_token:
         try:
-            from telegram_bot import start_bot_automatically
-            success = start_bot_automatically(bot.id, bot.telegram_token)
-            if success:
-                bot.is_active = True
-                db.session.commit()
-                flash('Bot muvaffaqiyatli ishga tushirildi!', 'success')
-            else:
-                flash('Bot ishga tushirishda muammo yuz berdi!', 'error')
+            bot_manager.start_bot_polling(bot)
+            bot.is_active = True
+            db.session.commit()
+            flash('Bot muvaffaqiyatli ishga tushirildi!', 'success')
         except Exception as e:
             flash(f'Xatolik: {str(e)}', 'error')
     else:
@@ -822,14 +812,10 @@ def stop_bot(bot_id):
         return redirect(url_for('main.dashboard'))
     
     try:
-        from telegram_bot import bot_manager
-        success = bot_manager.stop_bot(bot.id)
-        if success:
-            bot.is_active = False
-            db.session.commit()
-            flash('Bot to\'xtatildi!', 'success')
-        else:
-            flash('Bot to\'xtatishda muammo yuz berdi!', 'error')
+        bot_manager.stop_bot_polling(bot.id, 'telegram')
+        bot.is_active = False
+        db.session.commit()
+        flash('Bot to\'xtatildi!', 'success')
     except Exception as e:
         flash(f'Xatolik: {str(e)}', 'error')
     
