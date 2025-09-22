@@ -133,6 +133,12 @@ def sitemap_xml():
         f"{base}/login",
         f"{base}/register",
     ]
+    # Add blog posts
+    try:
+        for p in load_blog_posts():
+            urls.append(f"{base}/blog/{p['slug']}")
+    except Exception:
+        pass
     xml = [
         '<?xml version="1.0" encoding="UTF-8"?>',
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
@@ -154,6 +160,94 @@ Allow: /
 Sitemap: {base}/sitemap.xml
 """
     return Response(content, mimetype='text/plain')
+
+# ===================== Blog =====================
+import os
+
+BLOG_DIR = os.path.join(os.path.dirname(__file__), 'content', 'blog')
+
+def load_blog_posts():
+    """Load blog posts from content/blog. Simple format:
+    First line: Title
+    Second line: Short description
+    Remaining: Body (markdown-ish)
+    Filename is slug + .md
+    """
+    posts = []
+    try:
+        if not os.path.isdir(BLOG_DIR):
+            return posts
+        for name in sorted(os.listdir(BLOG_DIR)):
+            if not name.endswith('.md'):
+                continue
+            slug = name[:-3]
+            path = os.path.join(BLOG_DIR, name)
+            try:
+                with open(path, 'r', encoding='utf-8') as f:
+                    lines = f.read().splitlines()
+                title = lines[0].strip() if lines else slug.replace('-', ' ').title()
+                description = lines[1].strip() if len(lines) > 1 else ''
+                body = '\n'.join(lines[2:]) if len(lines) > 2 else ''
+                posts.append({
+                    'slug': slug,
+                    'title': title,
+                    'description': description,
+                    'body': body
+                })
+            except Exception as e:
+                logging.error(f"Error reading blog post {name}: {e}")
+    except Exception as e:
+        logging.error(f"Error loading blog posts: {e}")
+    # Latest first
+    posts.sort(key=lambda p: p['slug'], reverse=True)
+    return posts
+
+def markdown_to_html(md: str) -> str:
+    """Very naive markdown to HTML converter for paragraphs and headers."""
+    parts = []
+    for line in md.split('\n'):
+        s = line.strip()
+        if not s:
+            continue
+        if s.startswith('# '):
+            parts.append(f"<h2>{s[2:]}</h2>")
+        elif s.startswith('## '):
+            parts.append(f"<h3>{s[3:]}</h3>")
+        elif s.startswith('- '):
+            parts.append(f"<li>{s[2:]}</li>")
+        else:
+            parts.append(f"<p>{s}</p>")
+    # Wrap list items if any
+    html = []
+    in_list = False
+    for p in parts:
+        if p.startswith('<li>'):
+            if not in_list:
+                html.append('<ul>')
+                in_list = True
+            html.append(p)
+        else:
+            if in_list:
+                html.append('</ul>')
+                in_list = False
+            html.append(p)
+    if in_list:
+        html.append('</ul>')
+    return '\n'.join(html)
+
+@main_bp.route('/blog')
+def blog_index():
+    posts = load_blog_posts()
+    return render_template('blog_index.html', posts=posts)
+
+@main_bp.route('/blog/<slug>')
+def blog_post(slug):
+    posts = load_blog_posts()
+    post = next((p for p in posts if p['slug'] == slug), None)
+    if not post:
+        return redirect(url_for('main.blog_index'))
+    post_html = markdown_to_html(post['body'])
+    return render_template('blog_post.html', post=post, post_html=post_html)
 # ===================== Admin: Delete Bot / User =====================
 @main_bp.route('/admin/delete-bot/<int:bot_id>', methods=['POST'])
 @login_required
