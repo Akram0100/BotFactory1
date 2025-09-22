@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block title %}Qo'llanma — Bosqichma-bosqich boshlash | BotFactory AI{% endblock %}
+{% block og_title %}Boshlash qo'llanmasi — BotFactory AI{% endblock %}
+{% block og_description %}Foydalanuvchilar uchun bosqichma-bosqich qo'llanma: ro'yxatdan o'tish, bot yaratish, Telegram/Instagram/WhatsApp sozlash, xabar yuborish, diagnostika.{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="mb-0"><i class="fas fa-graduation-cap text-primary"></i> Boshlash qo'llanmasi</h1>
+      <p class="text-muted mb-0">BotFactory AI’dan hech qanday qiyinchiliksiz foydalanish uchun bosqichma‑bosqich yo'riqnoma</p>
+    </div>
+    <a class="btn btn-outline-secondary" href="{{ url_for('main.index') }}"><i class="fas fa-home me-1"></i> Bosh sahifa</a>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          <h3 class="h5"><i class="fas fa-user-plus me-2"></i>1. Ro'yxatdan o'tish va kirish</h3>
+          <ol class="mb-0 ps-3">
+            <li><a href="{{ url_for('auth.register') }}">Ro'yxatdan o'tish</a> sahifasidan hisob yarating.</li>
+            <li>Elektron pochta/username va parol bilan <a href="{{ url_for('auth.login') }}">kiring</a>.</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          <h3 class="h5"><i class="fas fa-robot me-2"></i>2. Bot yaratish</h3>
+          <ol class="ps-3">
+            <li><a href="{{ url_for('main.dashboard') }}">Boshqaruv paneli</a>ga o'ting.</li>
+            <li>“Yangi bot yaratish” tugmasini bosing va platformani tanlang (Telegram / Instagram / WhatsApp).</li>
+            <li>Kerakli maydonlarni to'ldiring (nomi, maqsad, tokenlar va h.k.).</li>
+          </ol>
+          <p class="mb-0 text-muted">Telegram uchun token BotFather’dan olinadi. Instagram/WhatsApp uchun Meta Graph API talab qilinadi.</p>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          <h3 class="h5"><i class="fab fa-telegram me-2"></i>3. Telegram sozlash (tez start)</h3>
+          <ol class="ps-3">
+            <li>@BotFather → <code>/newbot</code>. Tokenni oling.</li>
+            <li>Dashboard’da Telegram bot qatoriga tokenni kiriting va “Start” bosing.</li>
+            <li>Botga <code>/start</code> yozing — javob keldi, demak u ishlayapti.</li>
+          </ol>
+          <div class="alert alert-info mb-0"><strong>Eslatma:</strong> Biz polling + deduplikatsiya ishlatamiz. Markaziy <code>bot_manager</code> orqali start/stop boshqariladi.</div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          <h3 class="h5"><i class="fab fa-instagram me-2"></i>4. Instagram sozlash</h3>
+          <ul class="ps-3">
+            <li>Business/Creator hisob + Facebook Page bog'langan bo'lishi kerak.</li>
+            <li>Long‑lived Page Access Token andoza.</li>
+            <li>Webhook URL: Admin → Instagram bot → <code>/instagram/webhook/&lt;bot_id&gt;</code> ga subscribe qiling.</li>
+          </ul>
+          <p class="mb-1">Muammo bo'lsa, diagnostikadan foydalaning:</p>
+          <code>/admin/api/instagram/diagnostics/&lt;bot_id&gt;</code>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          <h3 class="h5"><i class="fab fa-whatsapp me-2"></i>5. WhatsApp sozlash</h3>
+          <ul class="ps-3">
+            <li>Meta WA Business: <strong>Access Token</strong> + <strong>Phone Number ID</strong>.</li>
+            <li>Webhook verify token mos bo'lsin (GET verify).</li>
+          </ul>
+          <p class="mb-0 text-muted">Admin paneldan WA botini “Start” qilib, test xabar yuboring.</p>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          <h3 class="h5"><i class="fas fa-paper-plane me-2"></i>6. Xabar yuborish (individual/broadcast)</h3>
+          <ol class="ps-3">
+            <li>Dashboard → bot yonidagi “Xabar yuborish” bo'limiga kiring.</li>
+            <li>Mijozni tanlang yoki “Barchaga yuborish” ni belgilang.</li>
+            <li>Matnni kiriting va “Yuborish” tugmasini bosing.</li>
+          </ol>
+          <p class="mb-0 text-muted">Instagram’da 24 soat oynasi amal qiladi: foydalanuvchi yozganidan keyin 24 soat ichida javob yuborish mumkin.</p>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          <h3 class="h5"><i class="fas fa-book me-2"></i>7. Bilim bazasi (knowledge base)</h3>
+          <ol class="ps-3">
+            <li>Bot tahrir sahifasida bilim bazasi faylini (.txt/.csv/.docx) yuklang.</li>
+            <li>“Saqlash”dan so'ng bilim bazasini qayta ishlash tugmasini bosing (agar mavjud bo'lsa).</li>
+            <li>Dialoglarda bilim bazasi ma'lumotlaridan foydalaniladi.</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          <h3 class="h5"><i class="fas fa-stethoscope me-2"></i>8. Diagnostika va muammolar</h3>
+          <ul class="ps-3 mb-0">
+            <li><strong>Instagram token:</strong> <code>/admin/api/instagram/diagnostics/&lt;bot_id&gt;</code></li>
+            <li><strong>Telegram ikki marta javob:</strong> deduplikatsiya yoqilgan.</li>
+            <li><strong>Webhook verify:</strong> <code>hub.verify_token</code> va <code>hub.challenge</code> ni tekshiring.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          <h3 class="h5"><i class="fas fa-shield-alt me-2"></i>9. Xavfsizlik</h3>
+          <ul class="ps-3 mb-0">
+            <li>Tokenlarni ommaga chiqarmang, ENV yoki DB’da saqlang.</li>
+            <li>Admin panelga faqat ishonchli foydalanuvchilar kiradi.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h3 class="h5"><i class="fas fa-life-ring me-2"></i>10. Yordam kerakmi?</h3>
+          <p class="mb-2">Savol va muammolaringiz bo'lsa, quyidagi kanallardan biriga murojaat qiling:</p>
+          <ul class="ps-3 mb-0">
+            <li><a href="{{ config['SUPPORT_TELEGRAM'] }}" target="_blank" rel="noopener">Telegram</a></li>
+            <li><a href="tel:{{ config['SUPPORT_PHONE'] }}">Qo'ng'iroq</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Tezkor linklar</h5>
+          <div class="list-group list-group-flush">
+            <a class="list-group-item list-group-item-action" href="{{ url_for('main.blog_index') }}"><i class="fas fa-newspaper me-1"></i> Blog</a>
+            <a class="list-group-item list-group-item-action" href="/sitemap.xml"><i class="fas fa-sitemap me-1"></i> Sitemap</a>
+            <a class="list-group-item list-group-item-action" href="/blog/rss.xml"><i class="fas fa-rss me-1"></i> RSS</a>
+            <a class="list-group-item list-group-item-action" href="{{ url_for('main.dashboard') }}"><i class="fas fa-tachometer-alt me-1"></i> Boshqaruv paneli</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -132,6 +132,7 @@ def sitemap_xml():
         f"{base}/admin",
         f"{base}/login",
         f"{base}/register",
+        f"{base}/help",
     ]
     # Add blog posts
     try:
@@ -305,6 +306,11 @@ def blog_rss():
       </channel>
     </rss>"""
     return Response(rss, mimetype='application/rss+xml')
+
+# ===================== Help / Getting Started =====================
+@main_bp.route('/help')
+def help_getting_started():
+    return render_template('help_getting_started.html')
 # ===================== Admin: Delete Bot / User =====================
 @main_bp.route('/admin/delete-bot/<int:bot_id>', methods=['POST'])
 @login_required
