@@ -136,7 +136,10 @@ def sitemap_xml():
     # Add blog posts
     try:
         for p in load_blog_posts():
-            urls.append(f"{base}/blog/{p['slug']}")
+            urls.append({
+                'loc': f"{base}/blog/{p['slug']}",
+                'lastmod': p.get('lastmod')
+            })
     except Exception:
         pass
     xml = [
@@ -145,7 +148,12 @@ def sitemap_xml():
     ]
     for u in urls:
         xml.append('<url>')
-        xml.append(f'<loc>{u}</loc>')
+        if isinstance(u, dict):
+            xml.append(f"<loc>{u['loc']}</loc>")
+            if u.get('lastmod'):
+                xml.append(f"<lastmod>{u['lastmod']}</lastmod>")
+        else:
+            xml.append(f'<loc>{u}</loc>')
         xml.append('</url>')
     xml.append('</urlset>')
     return Response("\n".join(xml), mimetype='application/xml')
@@ -188,11 +196,16 @@ def load_blog_posts():
                 title = lines[0].strip() if lines else slug.replace('-', ' ').title()
                 description = lines[1].strip() if len(lines) > 1 else ''
                 body = '\n'.join(lines[2:]) if len(lines) > 2 else ''
+                try:
+                    mtime = datetime.utcfromtimestamp(os.path.getmtime(path)).isoformat() + 'Z'
+                except Exception:
+                    mtime = None
                 posts.append({
                     'slug': slug,
                     'title': title,
                     'description': description,
-                    'body': body
+                    'body': body,
+                    'lastmod': mtime
                 })
             except Exception as e:
                 logging.error(f"Error reading blog post {name}: {e}")
@@ -247,7 +260,51 @@ def blog_post(slug):
     if not post:
         return redirect(url_for('main.blog_index'))
     post_html = markdown_to_html(post['body'])
-    return render_template('blog_post.html', post=post, post_html=post_html)
+    # Compute publish/modified dates
+    published = post.get('lastmod') or datetime.utcnow().isoformat() + 'Z'
+    modified = post.get('lastmod') or published
+    # Simple related posts by title word overlap, fallback by recency
+    def score(other):
+        if other['slug'] == post['slug']:
+            return -1
+        a = set((post.get('title') or '').lower().split())
+        b = set((other.get('title') or '').lower().split())
+        return len(a.intersection(b))
+    sorted_posts = sorted([p for p in posts if p['slug'] != post['slug']], key=lambda x: (score(x), x.get('lastmod') or ''), reverse=True)
+    related = sorted_posts[:4]
+    return render_template('blog_post.html', post=post, post_html=post_html, related=related, published=published, modified=modified)
+
+@main_bp.route('/blog/rss.xml')
+def blog_rss():
+    """Simple RSS feed for the blog"""
+    from flask import Response
+    base = request.url_root.rstrip('/')
+    posts = load_blog_posts()
+    items = []
+    for p in posts[:30]:
+        link = f"{base}/blog/{p['slug']}"
+        title = p['title']
+        desc = p.get('description','')
+        pubdate = p.get('lastmod') or datetime.utcnow().isoformat() + 'Z'
+        items.append(f"""
+        <item>
+          <title>{title}</title>
+          <link>{link}</link>
+          <guid>{link}</guid>
+          <description>{desc}</description>
+          <pubDate>{pubdate}</pubDate>
+        </item>
+        """)
+    rss = f"""<?xml version="1.0" encoding="UTF-8"?>
+    <rss version="2.0">
+      <channel>
+        <title>BotFactory AI Blog</title>
+        <link>{base}/blog</link>
+        <description>AI chatbot va messenjer integratsiyalari bo'yicha maqolalar</description>
+        {''.join(items)}
+      </channel>
+    </rss>"""
+    return Response(rss, mimetype='application/rss+xml')
 # ===================== Admin: Delete Bot / User =====================
 @main_bp.route('/admin/delete-bot/<int:bot_id>', methods=['POST'])
 @login_required
